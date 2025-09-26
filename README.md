@@ -10,14 +10,39 @@ This repository provides the PyTorch implementation of our EMNLP 2025 paper, ["E
 The core implementation of our framework resides in `./src/Models/`.
 
 ## Contents
-1. [Getting Started](#getting-started)  
-2. [Run](#run)  
-3. [Method Overview](#method-overview)  
-4. [Results](#results)  
-5. [Reproducibility Notes](#reproducibility-notes)  
-6. [Citation](#citation)  
-7. [Acknowledgements](#acknowledgements)
+1. [Method Overview](#method-overview)   
+2. [Getting Started](#getting-started)
+3. [Run](#run) 
+5. [Results](#results)  
+6. [Reproducibility Notes](#reproducibility-notes)  
+7. [Citation](#citation)  
+8. [Acknowledgements](#acknowledgements)
 
+---
+### Method Overview
+
+![Overview of the proposed framework.](https://raw.githubusercontent.com/zhanglong-ustc/RAL-PRVR/main/fig/main_fig.jpg)
+
+**1) Multimodal Semantic Robust Alignment (MSRA)**  
+- **Uncertainty‑aware embeddings.** Encode video frames and query words as multivariate Gaussians $\mathcal{N}(\mu, \sigma^2 I)$ to capture aleatoric uncertainty.  
+- **Query support set.** Build a support set of all sentences associated with a video and aggregate them to model richer text uncertainty.  
+- **Multi‑granularity aggregation.** Combine global mean‑pooled features with local gated‑attention features before estimating $(\mu, \sigma)$.  
+- **Losses.**  
+  - **Distribution Alignment $\;\mathcal{L}_{\mathrm{DA}}$**: KL divergence between text/video distributions + prior regularization.  
+  - **Proxy Matching $\;\mathcal{L}_{\mathrm{PM}}$**: Sample $K$ proxies via reparameterization and optimize a multi‑instance InfoNCE.
+
+**2) Confidence‑aware Set‑to‑Set Alignment (CSA)**  
+Predict word‑level confidence and weight word–frame similarities, down‑weighting uninformative words (e.g., stop words) when computing the final query–video score.
+
+**Final objective.**  
+```math
+\mathcal{L}
+= \lambda_1 \, \mathcal{L}_{\text{InfoNCE}}
++ \lambda_2 \, \mathcal{L}_{\text{Triplet}}
++ \lambda_3 \, \mathcal{L}_{\text{DA}}
++ \lambda_4 \, \mathcal{L}_{\text{PM}}.
+```
+---
 ---
 
 ## Getting Started
@@ -71,41 +96,11 @@ python main.py -d act --gpu 0 --eval --resume ./checkpoints/ral_gmmv2_act.pth
 
 > Pretrained checkpoints will be released once cleaned up.
 
----
-### Method Overview
-
-**1) Multimodal Semantic Robust Alignment (MSRA)**  
-- **Uncertainty‑aware embeddings.** Encode video frames and query words as multivariate Gaussians $\mathcal{N}(\mu, \sigma^2 I)$ to capture aleatoric uncertainty.  
-- **Query support set.** Build a support set of all sentences associated with a video and aggregate them to model richer text uncertainty.  
-- **Multi‑granularity aggregation.** Combine global mean‑pooled features with local gated‑attention features before estimating $(\mu, \sigma)$.  
-- **Losses.**  
-  - **Distribution Alignment $\;\mathcal{L}_{\mathrm{DA}}$**: KL divergence between text/video distributions + prior regularization.  
-  - **Proxy Matching $\;\mathcal{L}_{\mathrm{PM}}$**: Sample $K$ proxies via reparameterization and optimize a multi‑instance InfoNCE.
-
-**2) Confidence‑aware Set‑to‑Set Alignment (CSA)**  
-Predict word‑level confidence and weight word–frame similarities, down‑weighting uninformative words (e.g., stop words) when computing the final query–video score.
-
-**Final objective.**  
-```math
-\mathcal{L}
-= \lambda_1 \, \mathcal{L}_{\text{InfoNCE}}
-+ \lambda_2 \, \mathcal{L}_{\text{Triplet}}
-+ \lambda_3 \, \mathcal{L}_{\text{DA}}
-+ \lambda_4 \, \mathcal{L}_{\text{PM}}.
-```
-
----
-
 ## Results
 
 **Benchmarks:** TVR and ActivityNet Captions.  
-**Backbone:** GMMFormer v2 (+ RAL).
-
-| Dataset | R@1 | R@5 | R@10 | R@100 | SumR |
-|---|---:|---:|---:|---:|---:|
-| **TVR** | **18.2** | **40.4** | **52.1** | **88.0** | **198.8** |
-| **ActivityNet** | **8.9** | **27.7** | **40.4** | **79.1** | **156.1** |
-
+**Backbone:** GMMFormer v2, GMMFormer and MS-SL.
+![Overview of the proposed framework.](https://raw.githubusercontent.com/zhanglong-ustc/RAL-PRVR/main/fig/exp.jpg)
 
 ---
 
