@@ -5,7 +5,8 @@ RAL is a plug‑and‑play framework that explicitly models **data uncertainty**
 
 This repository provides the PyTorch implementation of our EMNLP 2025 paper, ["Enhancing Partially Relevant Video Retrieval with Robust Alignment Learning"](https://arxiv.org/abs/2509.01383), based on [GMMFormer v2](https://github.com/huangmozhi9527/GMMFormer_v2).
 
-> **TL;DR.** We represent text and video as **Gaussian distributions** to quantify aleatoric uncertainty, train with **distribution alignment (KL)** and **proxy matching** losses, and weight word–frame similarities with **learnable word confidence**. RAL integrates seamlessly with PRVR baselines (e.g., **MS‑SL**, **GMMFormer**, **GMMFormer v2**) and achieves **state‑of‑the‑art** results on **TVR** and **ActivityNet Captions**.
+> **TL;DR.** We explicitly model the **data uncertainty** in PRVR to make retrieval more robust. We model the video and query embeddings as **Gaussian distributions**, where the variance measures the inherent uncertainty of each instance. Based on these distributional representations, we construct **text and video proxies** as multiple possible alignment candidates, allowing the model to capture **diverse cross-modal relations**. In addition, we weight word–frame similarities with **learnable word confidence**. RAL integrates seamlessly with PRVR baselines (e.g., **MS‑SL**, **GMMFormer**, **GMMFormer v2**) and achieves **state‑of‑the‑art** results on **TVR** and **ActivityNet Captions**.
+
 
 The core implementation of our framework resides in `./src/Models/`.
 
@@ -22,17 +23,16 @@ The core implementation of our framework resides in `./src/Models/`.
 ### Method Overview
 
 ![Overview of the proposed framework.](https://raw.githubusercontent.com/zhanglong-ustc/RAL-PRVR/main/fig/main_fig.jpg)
-
+  
 **1) Multimodal Semantic Robust Alignment (MSRA)**  
-- **Uncertainty‑aware embeddings.** Encode video frames and query words as multivariate Gaussians $\mathcal{N}(\mu, \sigma^2 I)$ to capture aleatoric uncertainty.  
-- **Query support set.** Build a support set of all sentences associated with a video and aggregate them to model richer text uncertainty.  
-- **Multi‑granularity aggregation.** Combine global mean‑pooled features with local gated‑attention features before estimating $(\mu, \sigma)$.  
-- **Losses.**  
-  - **Distribution Alignment $\;\mathcal{L}_{\mathrm{DA}}$**: KL divergence between text/video distributions + prior regularization.  
-  - **Proxy Matching $\;\mathcal{L}_{\mathrm{PM}}$**: Sample $K$ proxies via reparameterization and optimize a multi‑instance InfoNCE.
+  
+- We collect a query support set containing all queries related to the video, obtaining its features $\text{Q}_s$ with rich contexts.  
+- Then, we apply multi-granularity aggregation to obtain holistic semantics, and generate distributional representations parameterized by mean vector $\boldsymbol{\mu}$ and variance vector $\boldsymbol{\sigma}$.
+- A proxy matching loss $\mathcal{L}\_{PM}$ and a distribution alignment loss $\mathcal{L}_{\mathrm{DA}}$ are used to unify the video and text domains.
+
 
 **2) Confidence‑aware Set‑to‑Set Alignment (CSA)**  
-Predict word‑level confidence and weight word–frame similarities, down‑weighting uninformative words (e.g., stop words) when computing the final query–video score.
+- We adopt a confidence predictor to assign confidence weights to each word, which is used to adjust the word-frame similarity matrix for video retrieval.
 
 **Final objective.**  
 ```math
@@ -70,7 +70,7 @@ Set `root` and `data_root` in the config files (e.g., `./Configs/tvr.py`).
 
 ## Run
 
-> RAL is *plug‑and‑play* and can be attached to PRVR backbones. The commands below mirror the standard training/eval pipeline; RAL will be enabled via the config/model flags.
+> RAL is *plug‑and‑play* and can be attached to PRVR backbones. 
 
 **Train on TVR**
 ```bash
@@ -107,8 +107,8 @@ python main.py -d act --gpu 0 --eval --resume ./checkpoints/ral_gmmv2_act.pth
 ## Reproducibility Notes
 
 - **Features:** ResNet + I3D for vision; RoBERTa for text (same as prior PRVR works).
-- **Optimizer:** Adam, LR `1e-4`, batch `128`, train `150` epochs with early‑stopping (no SumR improvement for 10 epochs).
-- **Loss weights:** $\lambda_1=0.05$, $\lambda_2=1$, $\lambda_3=0.004$, $\lambda_4=0.001$.
+- **Optimizer:** Adam, LR `1e-4`, batch `128`, train `100` epochs with early‑stopping (no SumR improvement for 10 epochs).
+- **Loss weights:** $\lambda_1=0.05$, $\lambda_2=1$, $\lambda_3=0.001$, $\lambda_4=0.004$.
 - **Proxy number:** `K=6` for $\mathcal{L}_{\mathrm{PM}}$.
 - **Retrieval score:** Frame‑level score from CSA is summed with clip‑level score for final ranking.
 
