@@ -72,29 +72,26 @@ Set `root` and `data_root` in the config files (e.g., `./Configs/tvr.py`).
 
 > RAL is *plug‑and‑play* and can be attached to PRVR backbones. 
 
-**Train on TVR**
+**1. RAL Training**
 ```bash
 cd src
 python main.py -d tvr --gpu 0
 ```
 
-**Evaluate on TVR**
+**2. RAL Evaluate**
+
+After training, you can inference using the saved model on val or test set:
+
+Below is an example of inference using RAL, which produces the best performance reported in the paper.
+
 ```bash
 python main.py -d tvr --gpu 0 --eval --resume ./checkpoints/ral_gmmv2_tvr.pth
 ```
 
-**Train on ActivityNet Captions**
-```bash
-cd src
-python main.py -d act --gpu 0
-```
+The model can also be downloaded from [Here](https://drive.google.com/drive/folders/1sH0gansGfOEVBq9W4xeAMTC8fJLFO292?usp=share_link).
 
-**Evaluate on ActivityNet Captions**
-```bash
-python main.py -d act --gpu 0 --eval --resume ./checkpoints/ral_gmmv2_act.pth
-```
 
-> Pretrained checkpoints will be released once cleaned up.
+> NOTE: The pretrained checkpoints are now available.
 
 ## Results
 
